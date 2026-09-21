@@ -1,0 +1,61 @@
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+*.env
+*.pem
+*.key
+
+# Node / Frontend dependencies & builds
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+.vite/
+**/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python & Virtual Environments
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database & Vector Store data
+*.sqlite
+*.sqlite3
+*.db
+vector_store/
+chroma_db/
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

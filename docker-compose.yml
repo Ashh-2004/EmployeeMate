@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: employeemate-api
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - LOG_LEVEL=INFO
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-key-change-in-production-123456789}
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      - LMSTUDIO_BASE_URL=${LMSTUDIO_BASE_URL:-http://host.docker.internal:11434/v1}
+      - LMSTUDIO_MODEL=${LMSTUDIO_MODEL:-gemma4:latest}
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:8000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional compose profile for running a local Ollama container in Docker
+  ollama:
+    image: ollama/ollama:latest
+    container_name: employeemate-ollama
+    profiles: ["local-llm"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ollama_data:

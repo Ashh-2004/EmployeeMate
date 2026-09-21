@@ -1,0 +1,17 @@
+Work From Home (WFH) & Hybrid Work Policy
+
+1. Work From Home Allowance:
+   - Eligible full-time employees can work remotely for up to 2 days per week (maximum 8 days per month).
+   - Core operational days (Tuesday and Thursday) require mandatory in-office presence unless prior manager exemption is granted.
+
+2. Core Working Hours & Availability:
+   - Remote employees must maintain core working hours between 10:00 AM and 4:00 PM local time.
+   - Employees are expected to be reachable via Slack/Teams and email during core working hours.
+
+3. Equipment & Network Requirements:
+   - Employees working remotely must ensure a high-speed broadband internet connection (minimum 50 Mbps).
+   - Use of company-issued laptop and VPN is mandatory for all remote work activities.
+   - Working from public Wi-Fi without VPN encryption is strictly prohibited.
+
+4. WFH Request Procedure:
+   - WFH days must be requested at least 24 hours in advance via the HR system or AI assistant.

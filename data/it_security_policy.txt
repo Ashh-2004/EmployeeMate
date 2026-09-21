@@ -1,0 +1,17 @@
+IT Security & Information Protection Policy
+
+1. Password & Access Control:
+   - Passwords must be a minimum of 12 characters, including uppercase, lowercase, numbers, and special symbols.
+   - Passwords expire every 90 days and cannot be reused for 5 cycles.
+   - Multi-Factor Authentication (MFA) is strictly mandatory for all corporate accounts and applications.
+
+2. Data Protection & Encryption:
+   - All sensitive corporate data must be stored on encrypted company drives or approved cloud storage (OneDrive/Google Workspace).
+   - Sending proprietary code or confidential client data to personal emails or external GenAI tools without approval is strictly prohibited.
+
+3. Device Security & Software Updates:
+   - Laptops must lock automatically after 5 minutes of inactivity.
+   - Installation of unauthorized third-party software or browser extensions is prohibited.
+
+4. Incident Reporting:
+   - Any suspected phishing email, lost hardware, or data breach must be reported immediately to security@company.com or via IT Helpdesk within 1 hour.
