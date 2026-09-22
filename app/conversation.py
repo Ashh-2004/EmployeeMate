@@ -32,13 +32,36 @@ Latest message: {message}
 Rewritten message:"""
 
 
+_REFERENTIAL_RE = re.compile(
+    r"\b(it|that|them|those|this|these|its|their)\b|"
+    r"\b(next month|next week|next year|after that|after applying|instead|then|again|later|before that|prior to that)\b|"
+    r"\b(what about|how about|what of|how many|how much|do i have left|can i take|could i|what if|how so|why|how come|tell me more|anything else)\b|"
+    r"^(and|or|so|also|after|for|in|on|with|during|before|by|from|to|at)\b|"
+    r"\b(left|remaining|other|another|same|previous|former|latter|more|details?)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_referential(message: str) -> bool:
+    """Check if message contains referential pronouns, time shifts, or follow-up signals."""
+    if _REFERENTIAL_RE.search(message):
+        return True
+    words = message.strip().split()
+    if len(words) < 6:
+        first_word = words[0].lower().strip("?,.!")
+        if first_word in {"why", "how", "when", "where", "who", "which", "can", "could", "would", "should", "is", "are", "do", "does", "any"}:
+            if len(words) <= 3:
+                return True
+    return False
+
+
 def _format(history: List[Dict[str, str]]) -> str:
     return "\n".join(f"{h['role'].capitalize()}: {h['content']}" for h in history)
 
 
 def _rule_based(message: str, history: List[Dict[str, str]]) -> str:
-    """Fallback when no LLM is available: borrow the topic from recent user turns."""
-    if _TOPIC_RE.search(message):
+    """Fallback when no LLM is available: borrow the topic from recent user turns only if referential signal is present."""
+    if _TOPIC_RE.search(message) or not _is_referential(message):
         return message
     for turn in reversed(history):
         if turn.get("role") == "user" and _TOPIC_RE.search(turn.get("content", "")):
