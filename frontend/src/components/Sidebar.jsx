@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Sparkles, Calendar, Compass, RefreshCw, MessageSquare, ChevronRight, UserCheck } from 'lucide-react';
+import { Users, Sparkles, Calendar, Compass, RefreshCw, MessageSquare, ChevronRight, UserCheck, LogOut } from 'lucide-react';
 
 export const DEFAULT_EMPLOYEES = [
   {
@@ -29,7 +29,9 @@ export default function Sidebar({
   onSendQuickPrompt,
   serverOnline,
   onRefreshHealth,
-  llmInfo
+  llmInfo,
+  authData,
+  onLogout
 }) {
   const fullEmployeeList = employees && employees.length > 0
     ? employees.filter((e) => e.emp_id && e.emp_id !== '')
@@ -181,6 +183,17 @@ export default function Sidebar({
             <RefreshCw className="w-3 h-3" />
           </button>
         </div>
+
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            className="w-full mt-2 py-2 px-3 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all shadow-sm"
+            title="Logout of current profile"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Logout ({authData?.emp_id || selectedEmp?.emp_id || 'User'})</span>
+          </button>
+        )}
       </div>
     </aside>
   );

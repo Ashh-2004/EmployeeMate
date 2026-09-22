@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar, { DEFAULT_EMPLOYEES } from './components/Sidebar';
 import ChatWindow from './components/ChatWindow';
 import LoginModal from './components/LoginModal';
-import { sendChatMessageStream, checkBackendHealth, fetchEmployees } from './services/api';
+import { sendChatMessageStream, checkBackendHealth, fetchEmployees, setAuthToken } from './services/api';
 
 export default function App() {
   const [authData, setAuthData] = useState(null);
@@ -33,13 +33,27 @@ export default function App() {
     }
 
     if (isHealthy && authData) {
-      const liveData = await fetchEmployees();
-      if (liveData && liveData.length > 0) {
-        setEmployeesList(liveData);
-        setSelectedEmp((prev) => {
-          const match = liveData.find((e) => e.emp_id === (authData.emp_id || prev?.emp_id));
-          return match ? match : liveData[0];
-        });
+      if (authData.role === 'HR') {
+        const liveData = await fetchEmployees();
+        if (liveData && liveData.length > 0) {
+          setEmployeesList(liveData);
+          setSelectedEmp((prev) => {
+            const match = liveData.find((e) => e.emp_id === (authData.emp_id || prev?.emp_id));
+            return match ? match : liveData[0];
+          });
+        }
+      } else {
+        const ownProfile = DEFAULT_EMPLOYEES.filter((e) => e.emp_id.toUpperCase() === (authData.emp_id || '').toUpperCase());
+        const userList = ownProfile.length > 0 ? ownProfile : [{
+          emp_id: authData.emp_id,
+          name: authData.name || authData.emp_id,
+          shortName: authData.name || authData.emp_id,
+          department: 'Engineering',
+          role: 'Employee',
+          leave_balance: 50
+        }];
+        setEmployeesList(userList);
+        setSelectedEmp(userList[0]);
       }
     }
   };
@@ -121,8 +135,32 @@ export default function App() {
     setError(null);
   };
 
+  const handleLoginSuccess = (data) => {
+    setAuthData(data);
+    if (data.role !== 'HR') {
+      const ownProfile = DEFAULT_EMPLOYEES.filter((e) => e.emp_id.toUpperCase() === (data.emp_id || '').toUpperCase());
+      const userList = ownProfile.length > 0 ? ownProfile : [{
+        emp_id: data.emp_id,
+        name: data.name || data.emp_id,
+        shortName: data.name || data.emp_id,
+        department: 'Engineering',
+        role: 'Employee',
+        leave_balance: 50
+      }];
+      setEmployeesList(userList);
+      setSelectedEmp(userList[0]);
+    }
+  };
+
+  const handleLogout = () => {
+    setAuthToken(null);
+    setAuthData(null);
+    setMessages([]);
+    setError(null);
+  };
+
   if (!authData) {
-    return <LoginModal onLoginSuccess={(data) => setAuthData(data)} />;
+    return <LoginModal onLoginSuccess={handleLoginSuccess} />;
   }
 
   return (
@@ -130,6 +168,7 @@ export default function App() {
       <Sidebar
         employees={employeesList}
         selectedEmp={selectedEmp}
+        authData={authData}
         onSelectEmp={(emp) => {
           setSelectedEmp(emp);
           setError(null);
@@ -138,17 +177,20 @@ export default function App() {
         serverOnline={serverOnline}
         onRefreshHealth={verifyHealthAndEmployees}
         llmInfo={llmInfo}
+        onLogout={handleLogout}
       />
 
       <ChatWindow
         messages={messages}
         selectedEmp={selectedEmp}
+        authData={authData}
         isLoading={isLoading}
         error={error}
         onSendMessage={handleSendMessage}
         onClearChat={handleClearChat}
         onSendQuickPrompt={handleSendMessage}
         llmInfo={llmInfo}
+        onLogout={handleLogout}
       />
     </div>
   );

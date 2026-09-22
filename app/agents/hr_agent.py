@@ -102,9 +102,20 @@ class HRAgent:
         prompt_lower = prompt.lower()
         is_apply_leave_intent = is_leave_application_request(prompt)
 
-        # Enforce Account Ownership Check if targeting another employee
+        # Enforce Account Ownership Check for non-HR users querying profile data
         if target_emp_id and effective_role != "HR":
             if effective_emp_id and target_emp_id.upper() != effective_emp_id.strip().upper():
+                return {
+                    "answer": "You can only apply leave for your own account.",
+                    "sources": [],
+                    "tools_used": [],
+                    "agent_routed": self.AGENT_NAME
+                }
+
+        # Enforce Account Ownership Check for Leave Application:
+        # Every user (including HR) can ONLY apply leave for their own account.
+        if is_apply_leave_intent:
+            if target_emp_id and effective_emp_id and target_emp_id.upper() != effective_emp_id.strip().upper():
                 return {
                     "answer": "You can only apply leave for your own account.",
                     "sources": [],

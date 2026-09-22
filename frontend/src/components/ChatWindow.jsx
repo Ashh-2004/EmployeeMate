@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import MessageBubble from './MessageBubble';
-import { Send, Trash2, Bot, Sparkles, AlertCircle, Loader2, Compass, ArrowRight, Download, MessageSquare } from 'lucide-react';
+import { Send, Trash2, Bot, Sparkles, AlertCircle, Loader2, Compass, ArrowRight, Download, MessageSquare, LogOut } from 'lucide-react';
 
 export default function ChatWindow({
   messages,
@@ -10,7 +10,8 @@ export default function ChatWindow({
   onSendMessage,
   onClearChat,
   onSendQuickPrompt,
-  llmInfo
+  llmInfo,
+  onLogout
 }) {
   const [inputPrompt, setInputPrompt] = useState('');
   const messagesEndRef = useRef(null);
@@ -94,6 +95,17 @@ export default function ChatWindow({
             >
               <Trash2 className="w-3 h-3" />
               <span>Clear Chat</span>
+            </button>
+          )}
+
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="flex items-center space-x-1 px-3 py-1.5 rounded-full text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition-all shadow-sm"
+              title="Logout of current profile"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Logout</span>
             </button>
           )}
         </div>

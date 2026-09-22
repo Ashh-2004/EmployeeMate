@@ -151,7 +151,7 @@ class TestEmployeeAIAssistant(unittest.TestCase):
         self.assertTrue(len(res_unfiltered["documents"]) <= 3)
 
     def test_11_rbac_account_ownership_check(self):
-        """Test non-HR/ADMIN users are blocked from applying leave for other accounts"""
+        """Test users are blocked from applying leave for other accounts"""
         # Refusal when EMPLOYEE role tries to act on another emp_id
         res_refused = orchestrator.route_and_execute(
             prompt="Apply leave for EMP002 from 2026-10-01 to 2026-10-02",
@@ -161,13 +161,22 @@ class TestEmployeeAIAssistant(unittest.TestCase):
         self.assertEqual(res_refused["answer"], "You can only apply leave for your own account.")
         self.assertEqual(res_refused["tools_used"], [])
 
-        # Allowed when actor_role is HR
-        res_hr = orchestrator.route_and_execute(
-            prompt="Apply leave for EMP002 from 2026-10-01 to 2026-10-02",
-            emp_id="EMP001",
+        # Refusal when HR role tries to apply leave for another employee ID
+        res_hr_apply = orchestrator.route_and_execute(
+            prompt="Apply leave for EMP001 from 2026-10-01 to 2026-10-02",
+            emp_id="EMP002",
             actor_role="HR"
         )
-        self.assertIn("apply_leave", res_hr["tools_used"])
+        self.assertEqual(res_hr_apply["answer"], "You can only apply leave for your own account.")
+        self.assertEqual(res_hr_apply["tools_used"], [])
+
+        # Allowed when HR role queries another employee profile
+        res_hr_query = orchestrator.route_and_execute(
+            prompt="Fetch profile for EMP001",
+            emp_id="EMP002",
+            actor_role="HR"
+        )
+        self.assertIn("get_employee_info", res_hr_query["tools_used"])
 
     def test_12_unknown_employee_id_handling(self):
         """Test apply_leave returns error for unknown employee ID"""
