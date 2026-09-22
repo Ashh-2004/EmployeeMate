@@ -339,27 +339,31 @@ class RAGPipeline:
             return [], []
 
         # Vector distance thresholding
-        max_dist = getattr(settings, "max_vector_distance", 1.35)
+        max_dist = getattr(settings, "max_vector_distance", 2.0)
         candidate_docs: List[Document] = [doc for doc, score in results_with_score if score <= max_dist]
 
+        if not candidate_docs and results_with_score:
+            candidate_docs = [doc for doc, _ in results_with_score[:top_k_initial]]
+
         if not candidate_docs:
-            logger.info(f"[RAG Retrieval] All vector candidate distances exceeded threshold ({max_dist}).")
             return [], []
 
         # CrossEncoder Reranking
         scored_pairs = self.reranker.rerank_with_scores(query, candidate_docs, top_n=top_n)
-        
+
         # Min rerank score thresholding
-        min_score = getattr(settings, "min_rerank_score", 0.0)
+        min_score = getattr(settings, "min_rerank_score", None)
         filtered_docs = []
         for doc, score in scored_pairs:
-            if score >= min_score:
+            if min_score is None or min_score < 0.0 or score >= min_score:
                 filtered_docs.append(doc)
             else:
                 logger.debug(f"[RAG Reranker] Chunk score {score:.4f} rejected below threshold {min_score}")
 
+        if not filtered_docs and scored_pairs:
+            filtered_docs = [doc for doc, _ in scored_pairs[:top_n]]
+
         if not filtered_docs:
-            logger.info(f"[RAG Retrieval] All reranked candidates fell below min_rerank_score ({min_score}).")
             return [], []
 
         sources: List[str] = []
@@ -432,8 +436,6 @@ class RAGPipeline:
 
             if answer and not_found_msg not in answer:
                 return answer, sources
-            elif answer:
-                return not_found_msg, []
 
         answer = self._synthesize_offline_answer(query_text, matching_docs, not_found_msg)
         if answer == not_found_msg:
@@ -527,7 +529,10 @@ class RAGPipeline:
         stop_words = {
             "what", "is", "are", "the", "company", "policy", "policies", "for", "about", "how",
             "does", "and", "or", "in", "on", "at", "to", "a", "an", "of", "with", "can", "i",
-            "we", "have", "tell", "me", "show"
+            "we", "have", "tell", "me", "show", "office", "work", "days", "home", "guidelines",
+            "rules", "details", "information", "info", "bring", "bringing", "provide", "provided",
+            "provides", "offer", "offered", "offers", "give", "gives", "include", "includes",
+            "has", "get", "getting"
         }
         query_terms = [
             word.lower().strip("?,.!")

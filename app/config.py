@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     embedding_model: str = "all-MiniLM-L6-v2"
     chunk_size: int = 500
     chunk_overlap: int = 50
-    max_vector_distance: float = 1.35
-    min_rerank_score: float = 0.0
+    max_vector_distance: float = 2.0
+    min_rerank_score: float = -10.0
 
     # Logging & Observability
     log_level: str = "INFO"

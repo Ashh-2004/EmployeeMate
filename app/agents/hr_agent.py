@@ -169,16 +169,16 @@ class HRAgent:
                 }
 
             # Check available balance
-            tools_used.append("get_employee_info")
             info_res = self.db.get_employee_info(target_emp_id)
             if info_res["status"] == "error":
                 return {
                     "answer": info_res["message"],
                     "sources": [],
-                    "tools_used": tools_used,
+                    "tools_used": [],
                     "agent_routed": self.AGENT_NAME
                 }
 
+            tools_used.append("get_employee_info")
             emp_data = info_res["data"]
             available_balance = emp_data["leave_balance"]
 
@@ -211,16 +211,24 @@ class HRAgent:
             }
 
         # Scenario 2: Employee Profile & Leave Balance Query
-        tools_used.append("get_employee_info")
         if not target_emp_id:
             return {
                 "answer": "Please provide a valid Employee ID (e.g., EMP001 for Rahul or EMP002 for Priya) to fetch HR details.",
                 "sources": [],
-                "tools_used": tools_used,
+                "tools_used": [],
                 "agent_routed": self.AGENT_NAME
             }
 
         result = self.db.get_employee_info(target_emp_id)
+        if result["status"] == "error":
+            return {
+                "answer": result["message"],
+                "sources": [],
+                "tools_used": [],
+                "agent_routed": self.AGENT_NAME
+            }
+
+        tools_used.append("get_employee_info")
         if result["status"] == "success":
             data = result["data"]
             llm = get_llm()
