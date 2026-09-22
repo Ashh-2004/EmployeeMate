@@ -75,3 +75,31 @@ def apply_leave_with_rbac(
 
     return db.apply_leave(emp_id=emp_id, start_date=start_date, end_date=end_date, reason=reason)
 
+
+def get_employee_info(employee_id: str, db=None) -> Dict[str, Any]:
+    if db is None:
+        from app.mock_db import db as mock_db
+        db = mock_db
+
+    return db.get_employee_info(employee_id)
+
+
+def apply_leave(
+    employee_id: str,
+    start_date: str,
+    end_date: str,
+    reason: str = "Personal",
+    db=None
+) -> Dict[str, Any]:
+    if db is None:
+        from app.mock_db import db as mock_db
+        db = mock_db
+
+    return db.apply_leave(
+        emp_id=employee_id,
+        start_date=start_date,
+        end_date=end_date,
+        reason=reason
+    )
+
+

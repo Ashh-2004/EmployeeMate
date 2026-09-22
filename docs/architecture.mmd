@@ -1,0 +1,28 @@
+flowchart TD
+    A[Company Policy Documents] --> B[Document Loader]
+    B --> C[Text Chunker]
+    C --> D[Embedding Model]
+    D --> E[(ChromaDB)]
+
+    U[Employee] --> F[React Frontend]
+    F --> G[FastAPI Backend]
+
+    G --> H[Conversation Memory]
+    H --> I[Orchestrator]
+
+    I --> J[Knowledge Agent]
+    I --> K[HR Agent]
+
+    J --> L[search_company_documents]
+    L --> E
+    E --> M[Retrieved Context]
+    M --> N[LLM]
+
+    K --> O[get_employee_info]
+    K --> P[apply_leave]
+    O --> Q[(Mock Employee Database)]
+    P --> Q
+
+    N --> G
+    Q --> G
+    G --> F

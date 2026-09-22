@@ -70,7 +70,20 @@ class OrchestratorRouter:
         is_knowledge_intent = any(kw in prompt_lower for kw in knowledge_keywords)
 
         # Step 5: Route Execution
-        if is_hr_intent and is_knowledge_intent:
+        leave_action_intent = bool(re.search(
+            r"\b(apply|submit|request|book)\b.*\b(leave|vacation|time off)\b",
+            prompt_lower
+        ))
+
+        if leave_action_intent:
+            return self.hr_agent.process(
+                standalone,
+                emp_id=emp_id,
+                history=history,
+                principal=principal,
+                actor_role=actor_role
+            )
+        elif is_hr_intent and is_knowledge_intent:
             return self._execute_both(standalone, emp_id=emp_id, history=history, principal=principal, actor_role=actor_role, category=category)
         elif is_hr_intent:
             return self.hr_agent.process(standalone, emp_id=emp_id, history=history, principal=principal, actor_role=actor_role)

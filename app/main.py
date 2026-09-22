@@ -7,7 +7,7 @@ from typing import List, Optional, Dict, Any
 from fastapi import FastAPI, HTTPException, Request, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.config import settings
 from app.logging_config import logger, request_id_var
@@ -66,12 +66,29 @@ async def logging_request_id_middleware(request: Request, call_next):
 
 # Request & Response Models
 class ChatRequest(BaseModel):
-    prompt: str = Field(..., max_length=2000, description="User query or instruction", example="What is the WFH policy?")
+    prompt: Optional[str] = Field(None, max_length=2000, description="User query or instruction", example="What is the WFH policy?")
+    message: Optional[str] = Field(None, max_length=2000, description="Alternative field for user query")
+
     emp_id: Optional[str] = Field(None, description="Optional Employee ID for HR context", example="EMP001")
+    employee_id: Optional[str] = Field(None, description="Alternative field for Employee ID")
+
     actor_role: Optional[str] = Field("EMPLOYEE", description="Role of the user (ignored for auth)", example="EMPLOYEE")
     session_id: Optional[str] = Field(None, description="Optional conversation session ID")
     category: Optional[str] = Field(None, description="Optional explicit metadata category filter")
     history: Optional[List[dict]] = Field(default_factory=list, description="Recent conversation history")
+
+    @model_validator(mode="after")
+    def normalize_assessment_fields(self):
+        if not self.prompt and self.message:
+            self.prompt = self.message
+
+        if not self.emp_id and self.employee_id:
+            self.emp_id = self.employee_id
+
+        if not self.prompt:
+            raise ValueError("Either 'prompt' or 'message' is required.")
+
+        return self
 
 
 class ChatResponse(BaseModel):

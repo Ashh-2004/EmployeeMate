@@ -274,10 +274,14 @@ class RAGPipeline:
             logger.warning(f"[RAG Embeddings Warning] Could not load HuggingFaceEmbeddings ({e}). Using DeterministicHashEmbeddings fallback.")
             embeddings = DeterministicHashEmbeddings()
 
-        if chunks:
-            self.vector_store = Chroma.from_documents(documents=chunks, embedding=embeddings)
-        else:
-            self.vector_store = Chroma(embedding_function=embeddings)
+        try:
+            if chunks:
+                self.vector_store = Chroma.from_documents(documents=chunks, embedding=embeddings)
+            else:
+                self.vector_store = Chroma(embedding_function=embeddings)
+        except Exception as e:
+            logger.warning(f"[RAG VectorStore Warning] Could not initialize Chroma ({e}). Using in-memory document fallback.")
+            self.vector_store = None
 
     def extract_topic(self, query_text: str) -> str:
         stop_words = {
@@ -302,7 +306,9 @@ class RAGPipeline:
         """
         start_time = time.time()
         if not self.vector_store:
-            return [], []
+            target_docs = self.source_documents_by_category.get(category.lower()) if category and category.lower() in self.source_documents_by_category else self.source_documents
+            sources = list(dict.fromkeys([doc.metadata.get("file_name") or doc.metadata.get("source", "unknown") for doc in target_docs]))
+            return target_docs[:top_n], sources
 
         if not category:
             lower_q = query.lower()
@@ -318,12 +324,6 @@ class RAGPipeline:
         where_filter = None
         if category:
             normalized_cat = category.lower().strip()
-            category_docs = self.source_documents_by_category.get(normalized_cat)
-            if category_docs:
-                sources = [doc.metadata.get("file_name") or doc.metadata.get("source", "unknown") for doc in category_docs]
-                latency_ms = (time.time() - start_time) * 1000
-                logger.info(f"[RAG Retrieval] Category direct match: '{normalized_cat}', count: {len(category_docs)}, latency: {latency_ms:.1f}ms")
-                return category_docs, list(dict.fromkeys(sources))
             where_filter = {"category": normalized_cat}
 
         try:

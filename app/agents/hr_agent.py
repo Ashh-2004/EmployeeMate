@@ -9,6 +9,20 @@ from app.logging_config import logger
 from app.security import sanitize_history
 
 
+def is_leave_application_request(prompt: str) -> bool:
+    prompt_lower = prompt.lower()
+
+    has_action = bool(re.search(
+        r"\b(apply|submit|request|book)\b", prompt_lower
+    ))
+
+    has_leave_term = bool(re.search(
+        r"\b(leave|leaves|vacation|time off|days off)\b", prompt_lower
+    ))
+
+    return has_action and has_leave_term
+
+
 def extract_leave_details(message: str, today: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """Backward-compatible helper using extract_leave_dates."""
     try:
@@ -86,10 +100,7 @@ class HRAgent:
             target_emp_id = effective_emp_id.strip().upper()
 
         prompt_lower = prompt.lower()
-        is_apply_leave_intent = bool(
-            re.search(r'\b(apply|take|book|request|need|want)\b.*\b(leave|leaves|vacation|off)\b', prompt_lower) or
-            re.search(r'\b(leave|leaves|vacation|off)\b.*\b(apply|application|request)\b', prompt_lower)
-        )
+        is_apply_leave_intent = is_leave_application_request(prompt)
 
         # Enforce Account Ownership Check if targeting another employee
         if target_emp_id and effective_role != "HR":
@@ -100,6 +111,39 @@ class HRAgent:
                     "tools_used": [],
                     "agent_routed": self.AGENT_NAME
                 }
+
+        # Informational leave queries (e.g. "Can I take 3 days next month?", "How many leaves do I have left?")
+        is_leave_information_query = bool(re.search(
+            r"\b(can i take|could i take|how many|how much|remaining|balance|left)\b",
+            prompt_lower
+        ))
+
+        if is_leave_information_query and not is_apply_leave_intent:
+            if target_emp_id:
+                tools_used.append("get_employee_info")
+                info_res = self.db.get_employee_info(target_emp_id)
+
+                if info_res["status"] == "success":
+                    balance = info_res["data"]["leave_balance"]
+                    name = info_res["data"]["name"]
+
+                    if any(p in prompt_lower for p in ["can i take", "could i take"]):
+                        days_match = re.search(r'(\d+)\s*days?', prompt_lower)
+                        days_str = f"{days_match.group(1)} days" if days_match else "3 days"
+                        answer = (
+                            f"Hi {name}! You currently have {balance} day(s) of available leave. "
+                            f"You can request {days_str} next month, subject to approval. "
+                            f"Please provide exact dates if you want me to submit the request."
+                        )
+                    else:
+                        answer = f"Hi {name}! You currently have {balance} day(s) of available leave."
+
+                    return {
+                        "answer": answer,
+                        "sources": [],
+                        "tools_used": tools_used,
+                        "agent_routed": self.AGENT_NAME
+                    }
 
         # Scenario 1: Apply Leave Operation
         if is_apply_leave_intent:
@@ -125,12 +169,13 @@ class HRAgent:
                 }
 
             # Check available balance
+            tools_used.append("get_employee_info")
             info_res = self.db.get_employee_info(target_emp_id)
             if info_res["status"] == "error":
                 return {
                     "answer": info_res["message"],
                     "sources": [],
-                    "tools_used": [],
+                    "tools_used": tools_used,
                     "agent_routed": self.AGENT_NAME
                 }
 
@@ -141,7 +186,7 @@ class HRAgent:
                 return {
                     "answer": f"Leave application rejected: Requested duration of {calc_days} day(s) exceeds your available leave balance of {available_balance} day(s).",
                     "sources": [],
-                    "tools_used": ["apply_leave"],
+                    "tools_used": tools_used,
                     "agent_routed": self.AGENT_NAME
                 }
 
